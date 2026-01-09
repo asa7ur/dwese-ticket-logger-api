@@ -1,194 +1,155 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.RegionRepository;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Optional;
+import java.util.*;
 
-@Controller
-@RequestMapping("/regions")
+@RestController
+@RequestMapping("/api/regions")
+@RequiredArgsConstructor
 public class RegionController {
+
     private static final Logger logger = LoggerFactory.getLogger(RegionController.class);
 
-    @Autowired
-    private RegionRepository regionRepository;
+    private final RegionRepository regionRepository;
+    private final MessageSource messageSource;
 
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
-    private MessageSource messageSource;
-
+    /**
+     * Lista regiones con paginación, ordenación y búsqueda.
+     */
     @GetMapping
-    public String listRegions(
+    public ResponseEntity<Page<Region>> getAllRegions(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "code") String sortField,
             @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) String searchTerm,
-            Model model) {
+            @RequestParam(required = false) String searchTerm) {
 
         logger.info("Listando regiones - Página: {}, Orden: {} {}, Busqueda: {}", page, sortField, sortDir, searchTerm);
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
-        Pageable pageable = PageRequest.of(page, 5, sort);
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Region> regionPage;
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            regionPage = regionRepository.findByNameContainingIgnoreCase(searchTerm, pageable);
-        } else {
-            regionPage = regionRepository.findAll(pageable);
+            Page<Region> regionPage;
+            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+                regionPage = regionRepository.findByNameContainingIgnoreCase(searchTerm, pageable);
+            } else {
+                regionPage = regionRepository.findAll(pageable);
+            }
+
+            return ResponseEntity.ok(regionPage);
+        } catch (Exception e) {
+            logger.error("Error al listar las regiones: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        model.addAttribute("listRegions", regionPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", regionPage.getTotalPages());
-        model.addAttribute("searchTerm", searchTerm);
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDir);
-        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
-        model.addAttribute("activePage", "regions");
-
-        return "region";
     }
 
-    @GetMapping("/new")
-    public String showNewForm(Model model) {
-        logger.info("Mostrando formulario para nueva región.");
-        model.addAttribute("region", new Region());
-        return "region-form";
-    }
-
-    @GetMapping("/edit")
-    public String showEditForm(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes) {
-        logger.info("Mostrando formulario de edición para la región con ID {}", id);
-        Optional<Region> regionOpt = regionRepository.findById(id);
-
-        if (regionOpt.isEmpty()) {
-            logger.warn("No se pudo encontrar la región con ID {}", id);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    messageSource.getMessage("msg.region.not-found", null, LocaleContextHolder.getLocale()));
-            return "redirect:/regions";
+    /**
+     * Obtener una región por ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getRegionById(@PathVariable Long id) {
+        logger.info("Buscando región con ID {}", id);
+        try {
+            Optional<Region> region = regionRepository.findById(id);
+            if (region.isPresent()) {
+                logger.info("Región con ID {} encontrada: {}", id, region.get());
+                return ResponseEntity.ok(region.get());
+            } else {
+                logger.warn("No se encontró ninguna región con ID {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+        } catch (Exception e) {
+            logger.error("Error al buscar la región con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        model.addAttribute("region", regionOpt.get());
-        return "region-form";
     }
 
-    @PostMapping("/insert")
-    public String insertRegion(
-            @Valid @ModelAttribute("region") Region region,
-            BindingResult result,
-            @RequestParam("imageFile") MultipartFile imageFile,
-            RedirectAttributes redirectAttributes,
-            Model model) {
-
+    /**
+     * Inserta una nueva región recibiendo un JSON.
+     */
+    @PostMapping
+    public ResponseEntity<?> createRegion(@Valid @RequestBody Region region, Locale locale) {
         logger.info("Insertando nueva región con código {}", region.getCode());
-
-        if (result.hasErrors()) {
-            logger.warn("Errores de validación en el formulario de nueva región.");
-            return "region-form";
-        }
-
-        if (regionRepository.existsRegionByCode(region.getCode())) {
-            logger.warn("El código de la región {} ya existe.", region.getCode());
-            model.addAttribute("errorMessage",
-                    messageSource.getMessage("msg.region.code-exists", null, LocaleContextHolder.getLocale()));
-            return "region-form";
-        }
-
-        if (!imageFile.isEmpty()) {
-            String fileName = fileStorageService.saveFile(imageFile);
-            if (fileName != null) {
-                region.setImage(fileName);
-            }
-        }
-
-        regionRepository.save(region);
-        logger.info("Región {} insertada con éxito.", region.getCode());
-        redirectAttributes.addFlashAttribute("successMessage",
-                messageSource.getMessage("msg.region.inserted", null, LocaleContextHolder.getLocale()));
-        return "redirect:/regions";
-    }
-
-    @PostMapping("/update")
-    public String updateRegion(
-            @Valid @ModelAttribute("region") Region region,
-            BindingResult result,
-            @RequestParam("imageFile") MultipartFile imageFile,
-            RedirectAttributes redirectAttributes,
-            Model model) {
-
-        logger.info("Actualizando región con ID {}", region.getId());
-
-        if (result.hasErrors()) {
-            logger.warn("Errores de validación al actualizar región con ID {}", region.getId());
-            return "region-form";
-        }
-
-        if (regionRepository.existsRegionByCodeAndNotId(region.getCode(), region.getId())) {
-            logger.warn("El código de la región {} ya existe para otra región.", region.getCode());
-            model.addAttribute("errorMessage",
-                    messageSource.getMessage("msg.region.code-exists", null, LocaleContextHolder.getLocale()));
-            return "region-form";
-        }
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            Region existingRegion = regionRepository.findById(region.getId()).orElse(null);
-            if (existingRegion != null && existingRegion.getImage() != null) {
-                fileStorageService.deleteFile(existingRegion.getImage());
+        try {
+            if (regionRepository.existsRegionByCode(region.getCode())) {
+                String errorMsg = messageSource.getMessage("msg.region.code-exists", null, locale);
+                logger.warn("El código {} ya existe.", region.getCode());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
             }
 
-            String fileName = fileStorageService.saveFile(imageFile);
-            region.setImage(fileName);
-        } else {
-            regionRepository.findById(region.getId()).ifPresent(r -> region.setImage(r.getImage()));
+            Region savedRegion = regionRepository.save(region);
+            logger.info("Región coreada exitosamente con ID {}", savedRegion.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedRegion);
+        } catch (Exception e) {
+            logger.error("Error al crear la región: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la región");
         }
-
-        regionRepository.save(region);
-        logger.info("Región con ID {} actualizada con éxito.", region.getId());
-        redirectAttributes.addFlashAttribute("successMessage",
-                messageSource.getMessage("msg.region.updated", null, LocaleContextHolder.getLocale()));
-        return "redirect:/regions";
     }
 
-    @PostMapping("/delete")
-    public String deleteRegion(
-            @RequestParam("id") Long id,
-            RedirectAttributes redirectAttributes) {
+    /**
+     * Actualiza una región existente recibiendo un JSON.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateRegion(@PathVariable Long id, @Valid @RequestBody Region region, Locale locale) {
+        logger.info("Actualizando región con ID {}", id);
+
+        try {
+            // Verificar si la región exite
+            Optional<Region> existingRegion = regionRepository.findById(id);
+            if (existingRegion.isEmpty()) {
+                logger.warn("No se encontró ninguna región con el ID {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("La región no existe.");
+            }
+            // Validar si el código ya pertenece a otra región
+            if (regionRepository.existsRegionByCodeAndNotId(region.getCode(), id)) {
+                String errorMsg = messageSource.getMessage("msg.region.code-exists", null, locale);
+                logger.warn("error al actualizar región: {}", errorMsg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+            }
+            // Actualizar la región
+            region.setId(id);
+            Region updateRegion = regionRepository.save(region);
+            logger.info("Región con ID {} actualizada con éxito.", id);
+            return ResponseEntity.ok(updateRegion);
+        } catch (Exception e) {
+            logger.error("Error al actualizar la región con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la región.");
+        }
+    }
+
+    /**
+     * Elimina una región y su imagen asociada del sistema de archivos.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRegion(@PathVariable Long id) {
         logger.info("Eliminando región con ID {}", id);
-
-        Optional<Region> regionOpt = regionRepository.findById(id);
-        if (regionOpt.isPresent()) {
-            Region region = regionOpt.get();
-            if (region.getImage() != null) {
-                fileStorageService.deleteFile(region.getImage());
+        try {
+            if (!regionRepository.existsById(id)) {
+                logger.warn("No se encontró ninguna región con la ID {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("La región no existe.");
             }
+            // Eliminar la región
             regionRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage",
-                    messageSource.getMessage("msg.region.deleted", null, LocaleContextHolder.getLocale()));
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    messageSource.getMessage("msg.region.not-found", null, LocaleContextHolder.getLocale()));
+            logger.info("Región con ID {} eliminada exitosamente.", id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            logger.error("Error al eliminar la región con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar la región.");
         }
-
-        return "redirect:/regions";
     }
-
 }
