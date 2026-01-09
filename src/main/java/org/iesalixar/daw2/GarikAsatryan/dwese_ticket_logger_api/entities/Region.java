@@ -1,5 +1,6 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -33,7 +34,7 @@ public class Region {
     @OneToMany(mappedBy = "region", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-
+    @JsonIgnore
     private List<Province> provinces;
 
     public Region(String code, String name) {
