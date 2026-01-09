@@ -1,6 +1,6 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories;
 
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.entities.Ticket;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.math.BigDecimal;

@@ -1,9 +1,9 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.entities.Region;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.repositories.RegionRepository;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.services.FileStorageService;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.RegionRepository;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -169,7 +168,6 @@ public class RegionController {
         return "redirect:/regions";
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/delete")
     public String deleteRegion(
             @RequestParam("id") Long id,

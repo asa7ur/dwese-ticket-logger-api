@@ -1,10 +1,10 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.entities.Product;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.entities.Ticket;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.repositories.ProductRepository;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_webapp.repositories.TicketRepository;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Product;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Ticket;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.ProductRepository;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.TicketRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
