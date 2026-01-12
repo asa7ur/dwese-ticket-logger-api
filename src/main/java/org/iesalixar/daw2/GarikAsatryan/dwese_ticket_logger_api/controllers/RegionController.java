@@ -2,8 +2,11 @@ package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionCreateDTO;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionDTO;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.RegionRepository;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.mappers.RegionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -26,12 +29,13 @@ public class RegionController {
 
     private final RegionRepository regionRepository;
     private final MessageSource messageSource;
+    private final RegionMapper regionMapper;
 
     /**
      * Lista regiones con paginación, ordenación y búsqueda.
      */
     @GetMapping
-    public ResponseEntity<Page<Region>> getAllRegions(
+    public ResponseEntity<Page<RegionDTO>> getAllRegions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "code") String sortField,
@@ -51,7 +55,9 @@ public class RegionController {
                 regionPage = regionRepository.findAll(pageable);
             }
 
-            return ResponseEntity.ok(regionPage);
+            Page<RegionDTO> regionDTOs = regionPage.map(regionMapper::toDTO);
+            logger.info("Se han encontrado {} regiones.", regionDTOs.getNumberOfElements());
+            return ResponseEntity.ok(regionDTOs);
         } catch (Exception e) {
             logger.error("Error al listar las regiones: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -62,13 +68,13 @@ public class RegionController {
      * Obtener una región por ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getRegionById(@PathVariable Long id) {
+    public ResponseEntity<RegionDTO> getRegionById(@PathVariable Long id) {
         logger.info("Buscando región con ID {}", id);
         try {
             Optional<Region> region = regionRepository.findById(id);
             if (region.isPresent()) {
                 logger.info("Región con ID {} encontrada: {}", id, region.get());
-                return ResponseEntity.ok(region.get());
+                return ResponseEntity.ok(regionMapper.toDTO(region.get()));
             } else {
                 logger.warn("No se encontró ninguna región con ID {}", id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -83,18 +89,19 @@ public class RegionController {
      * Inserta una nueva región recibiendo un JSON.
      */
     @PostMapping
-    public ResponseEntity<?> createRegion(@Valid @RequestBody Region region, Locale locale) {
-        logger.info("Insertando nueva región con código {}", region.getCode());
+    public ResponseEntity<?> createRegion(@Valid @RequestBody RegionCreateDTO regionCreateDTO, Locale locale) {
+        logger.info("Insertando nueva región con código {}", regionCreateDTO.getCode());
         try {
-            if (regionRepository.existsRegionByCode(region.getCode())) {
+            if (regionRepository.existsRegionByCode(regionCreateDTO.getCode())) {
                 String errorMsg = messageSource.getMessage("msg.region.code-exists", null, locale);
-                logger.warn("El código {} ya existe.", region.getCode());
+                logger.warn("El código {} ya existe.", errorMsg);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
             }
 
+            Region region = regionMapper.toEntity(regionCreateDTO);
             Region savedRegion = regionRepository.save(region);
             logger.info("Región coreada exitosamente con ID {}", savedRegion.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedRegion);
+            return ResponseEntity.status(HttpStatus.CREATED).body(regionMapper.toDTO(savedRegion));
         } catch (Exception e) {
             logger.error("Error al crear la región: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la región");
@@ -105,7 +112,10 @@ public class RegionController {
      * Actualiza una región existente recibiendo un JSON.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateRegion(@PathVariable Long id, @Valid @RequestBody Region region, Locale locale) {
+    public ResponseEntity<?> updateRegion(
+            @PathVariable Long id,
+            @Valid @RequestBody RegionCreateDTO regionCreateDTO,
+            Locale locale) {
         logger.info("Actualizando región con ID {}", id);
 
         try {
@@ -116,16 +126,18 @@ public class RegionController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("La región no existe.");
             }
             // Validar si el código ya pertenece a otra región
-            if (regionRepository.existsRegionByCodeAndNotId(region.getCode(), id)) {
+            if (regionRepository.existsRegionByCodeAndNotId(regionCreateDTO.getCode(), id)) {
                 String errorMsg = messageSource.getMessage("msg.region.code-exists", null, locale);
                 logger.warn("error al actualizar región: {}", errorMsg);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
             }
             // Actualizar la región
-            region.setId(id);
-            Region updateRegion = regionRepository.save(region);
+            Region regionToUpdate = existingRegion.get();
+            regionToUpdate.setCode(regionCreateDTO.getCode());
+            regionToUpdate.setName(regionCreateDTO.getName());
+            Region updateRegion = regionRepository.save(regionToUpdate);
             logger.info("Región con ID {} actualizada con éxito.", id);
-            return ResponseEntity.ok(updateRegion);
+            return ResponseEntity.ok(regionMapper.toDTO(updateRegion));
         } catch (Exception e) {
             logger.error("Error al actualizar la región con ID {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la región.");
