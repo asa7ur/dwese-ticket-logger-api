@@ -2,6 +2,7 @@ package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.bridge.Message;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionCreateDTO;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionDTO;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
@@ -26,6 +27,7 @@ public class RegionService {
 
     private final RegionRepository regionRepository;
     private final RegionMapper regionMapper;
+    public final MessageSource messageSource;
 
     public Page<RegionDTO> getAllRegions(String searchTerm, Pageable pageable){
         try{
