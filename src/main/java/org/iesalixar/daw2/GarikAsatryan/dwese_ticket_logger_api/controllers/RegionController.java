@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionCreateDTO;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.RegionDTO;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services.RegionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
