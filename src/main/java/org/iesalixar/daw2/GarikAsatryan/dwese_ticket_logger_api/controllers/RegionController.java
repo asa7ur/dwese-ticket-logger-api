@@ -80,9 +80,11 @@ public class RegionController {
     public ResponseEntity<?> createRegion(
             @Valid @RequestBody RegionCreateDTO regionCreateDTO,
             Locale locale) {
-        logger.info("Insertando nueva región con código {}", regionCreateDTO.getCode());
         try {
-            return regionService.createRegion(regionCreateDTO, locale);
+            RegionDTO createdRegion = regionService.createRegion(regionCreateDTO, locale);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdRegion);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al crear la región: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la región");
@@ -97,13 +99,14 @@ public class RegionController {
             @PathVariable Long id,
             @Valid @RequestBody RegionCreateDTO regionCreateDTO,
             Locale locale) {
-        logger.info("Actualizando región con ID {}", id);
-
         try {
-            return regionService.updateRegion(id, regionCreateDTO, locale);
+            RegionDTO updatedRegion = regionService.updateRegion(id, regionCreateDTO, locale);
+            return ResponseEntity.ok(updatedRegion);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al actualizar la región con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la región.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la región");
         }
     }
 
@@ -112,9 +115,11 @@ public class RegionController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRegion(@PathVariable Long id) {
-        logger.info("Eliminando región con ID {}", id);
         try {
-            return regionService.deleteRegion(id);
+            regionService.deleteRegion(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al eliminar la región con ID {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar la región.");
