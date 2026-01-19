@@ -5,66 +5,51 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "roles")
-@EqualsAndHashCode(exclude = "roles")
-@EntityListeners(AuditingEntityListener.class)
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotEmpty(message = "{msg.user.username.notEmpty}")
-    @Size(max = 50, message = "{msg.user.username.size}")
-    @Column(name = "username", nullable = false, unique = true, length = 50)
-    private String username;
+    @Column(nullable = false)
+    private String name;
 
-    @NotEmpty(message = "{msg.user.password.notEmpty}")
-    @Size(min = 8, message = "{msg.user.password.size}")
-    @Column(name = "password", nullable = false)
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
     private String password;
 
-    @NotNull(message = "{msg.user.enabled.notNull}")
-    @Column(name = "enabled", nullable = false)
-    private boolean enabled;
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    @NotEmpty(message = "{msg.user.firstName.notEmpty}")
-    @Size(max = 50, message = "{msg.user.firstName.size}")
-    @Column(name = "first_name", nullable = false, length = 50)
-    private String firstName;
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    @NotEmpty(message = "{msg.user.lastName.notEmpty}")
-    @Size(max = 50, message = "{msg.user.lastName.size}")
-    @Column(name = "last_name", nullable = false, length = 50)
-    private String lastName;
+    // Relación OneToMany con Order
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders = new ArrayList<>();
 
-    @Size(max = 255, message = "{msg.user.image.size}")
-    @Column(name = "image", length = 255)
-    private String image;
-
-    @CreatedDate
-    @Column(name = "created_date", updatable = false)
-    private LocalDateTime createdDate;
-
-    @LastModifiedDate
-    @Column(name = "last_modified_date")
-    private LocalDateTime lastModifiedDate;
-
-    @Column(name = "last_password_change_date")
-    private LocalDateTime lastPasswordChangeDate;
-
+    // Relación muchos a muchos con la entidad `Role`.
+    // Se establece FetchType.EAGER para que se carguen los roles junto al usuario
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -73,8 +58,10 @@ public class User {
     )
     private Set<Role> roles;
 
-    public void setPassword(String password) {
+
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
         this.password = password;
-        this.lastPasswordChangeDate = LocalDateTime.now();
     }
 }

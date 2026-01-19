@@ -7,6 +7,9 @@ DROP TABLE IF EXISTS product_ticket;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS order_products;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS categories;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE regions
@@ -35,10 +38,16 @@ CREATE TABLE tickets (
     );
 
 CREATE TABLE products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
-    );
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    description VARCHAR(255),
+    price DECIMAL(10,2) NOT NULL,
+    category_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    image VARCHAR(50),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
 
 CREATE TABLE product_ticket (
     product_id INT NOT NULL,
@@ -74,3 +83,25 @@ CREATE TABLE IF NOT EXISTS user_roles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
     );
+
+-- =========================
+-- ORDERS
+-- =========================
+CREATE TABLE orders (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- =========================
+-- ORDER_PRODUCTS (N-M)
+-- =========================
+CREATE TABLE order_products (
+    order_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    PRIMARY KEY (order_id, product_id),
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
