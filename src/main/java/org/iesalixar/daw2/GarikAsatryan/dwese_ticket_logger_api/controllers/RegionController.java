@@ -76,7 +76,7 @@ public class RegionController {
     /**
      * Inserta una nueva región recibiendo un JSON.
      */
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createRegion(
             @Valid @RequestBody RegionCreateDTO regionCreateDTO,
             Locale locale) {

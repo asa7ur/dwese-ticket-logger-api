@@ -24,6 +24,7 @@ public class RegionService {
 
     private final RegionRepository regionRepository;
     private final RegionMapper regionMapper;
+    private final FileStorageService fileStorageService;
     public final MessageSource messageSource;
 
     public Page<RegionDTO> getAllRegions(String searchTerm, Pageable pageable) {
@@ -57,7 +58,16 @@ public class RegionService {
             throw new IllegalArgumentException(errorMessage);
         }
 
+        String fileName = null;
+        if (regionCreateDTO.getImage() != null && !regionCreateDTO.getImage().isEmpty()) {
+            fileName = fileStorageService.saveFile(regionCreateDTO.getImage());
+            if (fileName == null) {
+                throw new RuntimeException("Error al guardar la imagen.");
+            }
+        }
+
         Region region = regionMapper.toEntity(regionCreateDTO);
+        region.setImage(fileName);
         Region savedRegion = regionRepository.save(region);
 
         return regionMapper.toDTO(savedRegion);
