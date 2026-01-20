@@ -67,7 +67,7 @@ public class RegionService {
         }
 
         Region region = regionMapper.toEntity(regionCreateDTO);
-        region.setImage(fileName);
+        region.setImage(fileName); // Guardamos solo el nombre del archivo en la BD
         Region savedRegion = regionRepository.save(region);
 
         return regionMapper.toDTO(savedRegion);
@@ -85,17 +85,37 @@ public class RegionService {
             String errorMessage = messageSource.getMessage("msg.region.code-exists", null, locale);
             throw new IllegalArgumentException(errorMessage);
         }
+
+        String fileName = existingRegion.getImage();
+        if (regionCreateDTO.getImage() != null && !regionCreateDTO.getImage().isEmpty()) {
+            fileName = fileStorageService.saveFile(regionCreateDTO.getImage());
+            if (fileName == null) {
+                throw new RuntimeException("Error al guardar la nueva imagen");
+            }
+        }
+
         existingRegion.setCode(regionCreateDTO.getCode());
         existingRegion.setName(regionCreateDTO.getName());
+        existingRegion.setImage(fileName);
         Region updatedRegion = regionRepository.save(existingRegion);
+        logger.info("Región con ID {} actualizada exitosamente.", updatedRegion.getId());
 
         return regionMapper.toDTO(updatedRegion);
     }
 
     public void deleteRegion(Long id) {
-        if (!regionRepository.existsById(id)) {
-            throw new IllegalArgumentException("la región no existe.");
+        logger.info("Buscando región con ID {}", id);
+
+        Region region = regionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La región no existe"));
+
+        if (region.getImage() != null && !region.getImage().isEmpty()) {
+            fileStorageService.deleteFile(region.getImage());
+            logger.info("imagen asociada a la región con ID {} eliminada.", id);
         }
+
         regionRepository.deleteById(id);
+        logger.info("Región con ID {} eliminada exitosamente.", id);
+        logger.info("Región con ID {} eliminada exitosamente.", id);
     }
 }

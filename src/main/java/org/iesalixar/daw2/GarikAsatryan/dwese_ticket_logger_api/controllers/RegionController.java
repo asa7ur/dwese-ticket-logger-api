@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,11 +77,14 @@ public class RegionController {
     /**
      * Inserta una nueva región recibiendo un JSON.
      */
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createRegion(
-            @Valid @RequestBody RegionCreateDTO regionCreateDTO,
+            @Valid @ModelAttribute RegionCreateDTO regionCreateDTO, // Cambiado de @RequestBody a @ModelAttribute
             Locale locale) {
         try {
+            logger.info("Recibida solicitud para crear región con imagen: {}",
+                    (regionCreateDTO.getImage() != null ? regionCreateDTO.getImage().getOriginalFilename() : "No hay archivo"));
+
             RegionDTO createdRegion = regionService.createRegion(regionCreateDTO, locale);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRegion);
         } catch (IllegalArgumentException e) {
@@ -94,10 +98,10 @@ public class RegionController {
     /**
      * Actualiza una región existente recibiendo un JSON.
      */
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateRegion(
             @PathVariable Long id,
-            @Valid @RequestBody RegionCreateDTO regionCreateDTO,
+            @Valid @ModelAttribute RegionCreateDTO regionCreateDTO,
             Locale locale) {
         try {
             RegionDTO updatedRegion = regionService.updateRegion(id, regionCreateDTO, locale);
@@ -115,6 +119,7 @@ public class RegionController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRegion(@PathVariable Long id) {
+        logger.info("Eliminando región con ID {}", id);
         try {
             regionService.deleteRegion(id);
             return ResponseEntity.noContent().build();
