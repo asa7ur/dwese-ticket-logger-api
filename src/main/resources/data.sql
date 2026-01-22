@@ -116,7 +116,7 @@ VALUES
 
 INSERT IGNORE INTO users (id, username, password, enabled, first_name, last_name, image, created_date, last_modified_date, last_password_change_date)
 VALUES
-(1, 'admin', '$2a$12$6QMc2ixEX4YsCJ4lxKX6eO3b8LznIQc3J7rK2aojkTiENuq7ByypK', true, 'Admin', 'User', '/images/admin.jpg', NOW(), NOW(), NOW()),
+(1, 'admin', '$2a$12$mTsYJAmrs9cQMpLEEOXk7ucbP8mkp5DuO5ehczmEC5/GrEgR61M8S', true, 'Admin', 'User', '/images/admin.jpg', NOW(), NOW(), NOW()),
 (2, 'manager', '$2a$12$UrjAduLzecRR/c2Ra.d1XeqUPl6iKmXP4CG3LMUaj3UCczUjKAzS2', true, 'Manager', 'User', '/images/manager.jpg', NOW(), NOW(), NOW()),
 (3, 'user', '$2a$12$cBMM4y0TcLRBErXNLunrJeHiyC9fyXc670u9vFNFx1PYz.wN2T4rK', true, 'Regular', 'User', '/images/user.jpg', NOW(), NOW(), NOW()),
 (4, 'asa7ur', '$2a$12$cBMM4y0TcLRBErXNLunrJeHiyC9fyXc670u9vFNFx1PYz.wN2T4rK', true, 'Garik', 'Asatryan', '/images/user.jpg', NOW(), NOW(), NOW());

@@ -43,12 +43,12 @@ public class AuthenticationController {
     public ResponseEntity<AuthResponseDTO> authenticate(@Valid @RequestBody AuthRequestDTO authRequest) {
         try {
             // Validar datos de entrada (opcional si no usas validación adicional en DTO)
-            if (authRequest.getEmail() == null || authRequest.getPassword() == null) {
+            if (authRequest.getUsername() == null || authRequest.getPassword() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AuthResponseDTO(null, "El nombre de usuario y la contraseña son obligatorios."));
             }
 
             // Intenta autenticar al usuario con las credenciales proporcionadas
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
             );
 
             // Obtiene el nombre de usuario autenticado
