@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,21 +33,15 @@ public class RegionController {
      */
     @GetMapping
     public ResponseEntity<Page<RegionDTO>> getAllRegions(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "code") String sortField,
-            @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) String searchTerm) {
+            @PageableDefault(size = 10, sort = "name") Pageable pageable
+    ) {
 
-        logger.info("Listando regiones - Página: {}, Orden: {} {}, Busqueda: {}", page, sortField, sortDir, searchTerm);
+        logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
 
         try {
-            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
-
-            Page<RegionDTO> regionDTOs = regionService.getAllRegions(searchTerm, pageable);
-            logger.info("Se han encontrado {} regiones", regionDTOs.getTotalElements());
-            return ResponseEntity.ok(regionDTOs);
+            Page<RegionDTO> regions = regionService.getAllRegions(pageable);
+            logger.info("Se han encontrado {} regiones", regions.getTotalElements());
+            return ResponseEntity.ok(regions);
         } catch (Exception e) {
             logger.error("Error al procesar la solicitud de listado de regiones: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

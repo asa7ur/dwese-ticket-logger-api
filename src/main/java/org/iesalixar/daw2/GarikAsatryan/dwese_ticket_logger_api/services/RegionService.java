@@ -27,18 +27,15 @@ public class RegionService {
     private final FileStorageService fileStorageService;
     public final MessageSource messageSource;
 
-    public Page<RegionDTO> getAllRegions(String searchTerm, Pageable pageable) {
+    public Page<RegionDTO> getAllRegions(Pageable pageable) {
+        logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
         try {
-            Page<Region> regionPage;
-            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-                regionPage = regionRepository.findByNameContainingIgnoreCase(searchTerm, pageable);
-            } else {
-                regionPage = regionRepository.findAll(pageable);
-            }
+            Page<Region> regionPage = regionRepository.findAll(pageable);
+            logger.info("Se han encontrado {} rtegiones en la página actual.", regionPage.getNumberOfElements());
             return regionPage.map(regionMapper::toDTO);
         } catch (Exception e) {
             logger.error("Error al obtener todas las regiones: {}", e.getMessage());
-            throw new RuntimeException("Error al obtener todas las regiones.", e);
+            throw e;
         }
     }
 
