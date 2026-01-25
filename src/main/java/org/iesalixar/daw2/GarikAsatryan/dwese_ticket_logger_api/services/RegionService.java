@@ -31,7 +31,7 @@ public class RegionService {
         logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
         try {
             Page<Region> regionPage = regionRepository.findAll(pageable);
-            logger.info("Se han encontrado {} rtegiones en la página actual.", regionPage.getNumberOfElements());
+            logger.info("Se han encontrado {} regiones en la página actual.", regionPage.getNumberOfElements());
             return regionPage.map(regionMapper::toDTO);
         } catch (Exception e) {
             logger.error("Error al obtener todas las regiones: {}", e.getMessage());
