@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 
 
 @RestController
-@RequestMapping("/api/v1/images")
+@RequestMapping("/api/images")
 public class FileStorageController {
     @Value("${UPLOAD_PATH}")
     private String uploadPath;
