@@ -33,7 +33,7 @@ public class RegionController {
      */
     @GetMapping
     public ResponseEntity<Page<RegionDTO>> getAllRegions(
-            @PageableDefault(size = 10, sort = "name") Pageable pageable
+            @PageableDefault(sort = "name") Pageable pageable
     ) {
 
         logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());

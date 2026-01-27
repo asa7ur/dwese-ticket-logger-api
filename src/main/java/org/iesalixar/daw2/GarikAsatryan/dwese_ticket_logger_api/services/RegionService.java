@@ -41,7 +41,7 @@ public class RegionService {
 
     public Optional<RegionDTO> getRegionById(Long id) {
         try {
-            logger.info("buscando región con ID {}", id);
+            logger.info("Buscando región con el ID {}", id);
             return regionRepository.findById(id).map(regionMapper::toDTO);
         } catch (Exception e) {
             logger.error("Error al buscar región con ID {}: {}", id, e.getMessage());
@@ -66,6 +66,7 @@ public class RegionService {
         Region region = regionMapper.toEntity(regionCreateDTO);
         region.setImage(fileName); // Guardamos solo el nombre del archivo en la BD
         Region savedRegion = regionRepository.save(region);
+        logger.info("Región {} creada con éxito", savedRegion.getName());
 
         return regionMapper.toDTO(savedRegion);
     }
@@ -94,6 +95,7 @@ public class RegionService {
         existingRegion.setCode(regionCreateDTO.getCode());
         existingRegion.setName(regionCreateDTO.getName());
         existingRegion.setImage(fileName);
+
         Region updatedRegion = regionRepository.save(existingRegion);
         logger.info("Región con ID {} actualizada exitosamente.", updatedRegion.getId());
 
@@ -112,7 +114,6 @@ public class RegionService {
         }
 
         regionRepository.deleteById(id);
-        logger.info("Región con ID {} eliminada exitosamente.", id);
         logger.info("Región con ID {} eliminada exitosamente.", id);
     }
 }

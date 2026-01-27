@@ -1,168 +1,108 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Province;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.Region;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.ProvinceRepository;
-import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.RegionRepository;
+import lombok.RequiredArgsConstructor;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.ProvinceCreateDTO;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.ProvinceDTO;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services.ProvinceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
-@Controller
-@RequestMapping("/provinces")
+@RestController
+@RequestMapping("/api/provinces")
+@RequiredArgsConstructor
 public class ProvinceController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProvinceController.class);
 
-    @Autowired
-    private ProvinceRepository provinceRepository;
-
-    @Autowired
-    private RegionRepository regionRepository;
-
-    @Autowired
-    private MessageSource messageSource;
+    private final ProvinceService provinceService;
 
     @GetMapping
-    public String listProvinces(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "code") String sortField,
-            @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) String searchTerm,
-            Model model) {
+    public ResponseEntity<Page<ProvinceDTO>> getAllProvinces(
+            @PageableDefault(sort = "name") Pageable pageable
+    ) {
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
-        Pageable pageable = PageRequest.of(page, 5, sort);
+        logger.info("Solicitando todas las provincias con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<Province> provincePage;
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            provincePage = provinceRepository.searchProvinces(searchTerm, pageable);
-        } else {
-            provincePage = provinceRepository.findAll(pageable);
+        try {
+            Page<ProvinceDTO> provinces = provinceService.getAllProvinces(pageable);
+            logger.info("Se han encontrado {} provincias", provinces.getTotalElements());
+            return ResponseEntity.ok(provinces);
+        } catch (Exception e) {
+            logger.error("Error al procesar la solicitud de listado de provincias: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        model.addAttribute("listProvinces", provincePage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", provincePage.getTotalPages());
-        model.addAttribute("searchTerm", searchTerm);
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDir);
-        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
-        model.addAttribute("activePage", "provinces");
-
-        return "province";
     }
 
-    @GetMapping("/new")
-    public String showNewForm(Model model) {
-        logger.info("Mostrando formulario para nueva provincia.");
-        model.addAttribute("province", new Province());
-
-        List<Region> regions = regionRepository.findAll();
-        model.addAttribute("regions", regions);
-
-        return "province-form";
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProvinceById(@PathVariable Long id) {
+        logger.info("Buscando provincia con ID {}", id);
+        try {
+            Optional<ProvinceDTO> provinceDTO = provinceService.getProvinceById(id);
+            if (provinceDTO.isPresent()) {
+                logger.info("Provincia con ID {} encontrada", id);
+                return ResponseEntity.ok(provinceDTO.get());
+            } else {
+                logger.warn("No se encontró ninguna provincia con ID {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("La provincia no existe.");
+            }
+        } catch (Exception e) {
+            logger.error("Error al buscar la provincia con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al buscar la provincia.");
+        }
     }
 
-    @GetMapping("/edit")
-    public String showEditForm(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes) {
-        logger.info("Mostrando formulario de edición para la provincia con ID {}", id);
-        Optional<Province> provinceOpt = provinceRepository.findById(id);
-
-        if (provinceOpt.isEmpty()) {
-            logger.warn("No se encontró la provincia con ID {}", id);
-            String errorMsg = messageSource.getMessage("msg.province.not-found", new Object[]{id}, LocaleContextHolder.getLocale());
-            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
-            return "redirect:/provinces";
+    @PostMapping
+    public ResponseEntity<?> createProvince(
+            @Valid @RequestBody ProvinceCreateDTO provinceCreateDTO, // Cambiado de @RequestBody a @ModelAttribute
+            Locale locale) {
+        try {
+            ProvinceDTO createdProvince = provinceService.createProvince(provinceCreateDTO, locale);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdProvince);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error al crear la provincia: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la provincia");
         }
-
-        model.addAttribute("province", provinceOpt.get());
-        model.addAttribute("regions", regionRepository.findAll());
-        return "province-form";
     }
 
-    @PostMapping("/insert")
-    public String insertProvince(
-            @Valid @ModelAttribute("province") Province province,
-            BindingResult result,
-            Model model,
-            RedirectAttributes redirectAttributes) {
-
-        logger.info("Insertando nueva provincia con código {}", province.getCode());
-
-        if (result.hasErrors()) {
-            logger.warn("Errores de validación en el formulario de nueva provincia.");
-            model.addAttribute("regions", regionRepository.findAll());
-            return "province-form";
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<?> updateProvince(
+            @PathVariable Long id,
+            @Valid @RequestBody ProvinceCreateDTO provinceCreateDTO,
+            Locale locale) {
+        try {
+            ProvinceDTO updatedProvince = provinceService.updateProvince(id, provinceCreateDTO, locale);
+            return ResponseEntity.ok(updatedProvince);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error al actualizar la provincia con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la provincia");
         }
-
-        if (provinceRepository.existsProvinceByCode(province.getCode())) {
-            logger.warn("El código de la provincia {} ya existe.", province.getCode());
-            String errorMsg = messageSource.getMessage("msg.province.code-exists", null, LocaleContextHolder.getLocale());
-            model.addAttribute("errorMessage", errorMsg);
-            model.addAttribute("regions", regionRepository.findAll());
-            return "province-form";
-        }
-
-        provinceRepository.save(province);
-        logger.info("Provincia {} insertada con éxito.", province.getCode());
-        String successMsg = messageSource.getMessage("msg.province.inserted", null, LocaleContextHolder.getLocale());
-        redirectAttributes.addFlashAttribute("successMessage", successMsg);
-        return "redirect:/provinces";
     }
 
-    @PostMapping("/update")
-    public String updateProvince(
-            @Valid @ModelAttribute("province") Province province,
-            BindingResult result,
-            Model model,
-            RedirectAttributes redirectAttributes) {
-
-        logger.info("Actualizando provincia con ID {}", province.getId());
-
-        if (result.hasErrors()) {
-            logger.warn("Errores de validación al actualizar la provincia.");
-            model.addAttribute("regions", regionRepository.findAll());
-            return "province-form";
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProvince(@PathVariable Long id) {
+        logger.info("Eliminando región con ID {}", id);
+        try {
+            provinceService.deleteProvince(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error al eliminar la región con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar la región.");
         }
-
-        if (provinceRepository.existsProvinceByCodeAndNotId(province.getCode(), province.getId())) {
-            logger.warn("El código de la provincia {} ya existe para otra provincia.", province.getCode());
-            String errorMsg = messageSource.getMessage("msg.province.code-exists", null, LocaleContextHolder.getLocale());
-            model.addAttribute("errorMessage", errorMsg);
-            model.addAttribute("regions", regionRepository.findAll());
-            return "province-form";
-        }
-
-        provinceRepository.save(province);
-        logger.info("Provincia con ID {} actualizada con éxito.", province.getId());
-        String successMsg = messageSource.getMessage("msg.province.updated", null, LocaleContextHolder.getLocale());
-        redirectAttributes.addFlashAttribute("successMessage", successMsg);
-        return "redirect:/provinces";
-    }
-
-    @PostMapping("/delete")
-    public String deleteProvince(@RequestParam("id") Long id, RedirectAttributes redirectAttributes) {
-        logger.info("Eliminando provincia con ID {}", id);
-        provinceRepository.deleteById(id);
-        logger.info("Provincia con ID {} eliminada con éxito.", id);
-        String successMsg = messageSource.getMessage("msg.province.deleted", null, LocaleContextHolder.getLocale());
-        redirectAttributes.addFlashAttribute("successMessage", successMsg);
-        return "redirect:/provinces";
     }
 }
