@@ -1,6 +1,7 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.config;
 
 
+import lombok.RequiredArgsConstructor;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.services.CustomUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,15 +28,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity  // Activa la seguridad basada en métodos
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Configura el filtro de seguridad para las solicitudes HTTP, especificando las

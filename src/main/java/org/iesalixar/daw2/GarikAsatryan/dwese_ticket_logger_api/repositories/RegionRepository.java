@@ -13,5 +13,4 @@ public interface RegionRepository extends JpaRepository<Region, Long> {
     @Query("SELECT COUNT(r) > 0 FROM Region r WHERE r.code = :code AND r.id != :id")
     boolean existsRegionByCodeAndNotId(@Param("code") String code, @Param("id") Long id);
 
-    Page<Region> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
