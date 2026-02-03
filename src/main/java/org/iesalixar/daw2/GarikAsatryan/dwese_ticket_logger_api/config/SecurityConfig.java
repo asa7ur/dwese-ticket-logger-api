@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/regions",
-                                "/api/provinces").hasRole("MANAGER")
+                                "/api/provinces").hasRole("ADMIN")
                         .requestMatchers("/api/v1/authenticate", "/api/v1/register").permitAll()
                         .anyRequest().authenticated() // El resto requiere autenticación
                 )

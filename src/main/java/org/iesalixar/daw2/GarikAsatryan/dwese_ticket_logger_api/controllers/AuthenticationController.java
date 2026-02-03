@@ -22,7 +22,7 @@ import java.util.List;
  * Proporciona un endpoint para autenticar usuarios y generar un token JWT en caso de éxito.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class AuthenticationController {
 
     @Autowired
