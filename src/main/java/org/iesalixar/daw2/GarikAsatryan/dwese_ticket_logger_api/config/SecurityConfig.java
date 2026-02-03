@@ -53,7 +53,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // Las APIs REST no suelen necesitar CSRF
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Sin sesiones
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/authenticate", "/docs", "/api-docs", "/api-docs/*", "/swagger-ui.html", "/swagger-ui/*").permitAll() // Endpoints públicos
+                        .requestMatchers("/api/tickets").hasRole("USER")
+                        .requestMatchers("/api/admin").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/regions",
+                                "/api/provinces").hasRole("MANAGER")
+                        .requestMatchers("/api/v1/authenticate", "/api/v1/register").permitAll()
                         .anyRequest().authenticated() // El resto requiere autenticación
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Filtro JWT
