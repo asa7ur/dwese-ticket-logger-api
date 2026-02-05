@@ -28,7 +28,8 @@ public class RegionService {
     public final MessageSource messageSource;
 
     public Page<RegionDTO> getAllRegions(Pageable pageable) {
-        logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
+        logger.info("Solicitando todas las regiones con paginación: página {}, tamaño {}",
+                pageable.getPageNumber(), pageable.getPageSize());
         try {
             Page<Region> regionPage = regionRepository.findAll(pageable);
             logger.info("Se han encontrado {} regiones en la página actual.", regionPage.getNumberOfElements());
