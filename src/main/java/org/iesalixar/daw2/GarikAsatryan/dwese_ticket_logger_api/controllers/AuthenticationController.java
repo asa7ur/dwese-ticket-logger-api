@@ -1,8 +1,11 @@
 package org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.AuthRequestDTO;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.dtos.AuthResponseDTO;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.entities.User;
+import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.repositories.UserRepository;
 import org.iesalixar.daw2.GarikAsatryan.dwese_ticket_logger_api.utils.JwtUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +26,14 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class AuthenticationController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager; // Maneja la lógica de autenticación
+    private final AuthenticationManager authenticationManager; // Maneja la lógica de autenticación
 
-    @Autowired
-    private JwtUtil jwtUtil; // Utilidad personalizada para manejar tokens JWT
+    private final JwtUtil jwtUtil; // Utilidad personalizada para manejar tokens JWT
 
+    private final UserRepository userRepository; // Necesario para buscar al usuario
 
     /**
      * Endpoint para autenticar a un usuario. Recibe las credenciales, las valida y
@@ -54,13 +57,17 @@ public class AuthenticationController {
             // Obtiene el nombre de usuario autenticado
             String username = authentication.getName();
 
+            // Buscamos al usuario para obtener nombre y apellidos
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             // Extrae los roles del usuario autenticado desde las autoridades asignadas
             List<String> roles = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority) // Convierte cada autoridad en su representación de texto
                     .toList();
 
             // Genera un token JWT para el usuario autenticado, incluyendo sus roles
-            String token = jwtUtil.generateToken(username, roles);
+            String token = jwtUtil.generateToken(username, roles, user.getFirstName(), user.getLastName());
 
             // Retorna una respuesta con el token JWT y un mensaje de éxito
             return ResponseEntity.ok(new AuthResponseDTO(token, "Authentication successful"));

@@ -109,20 +109,23 @@ VALUES
 (52, '52', 'Melilla', 18);
 
 INSERT IGNORE INTO roles (id, name)
-VALUES
-(1, 'ROLE_ADMIN'),
-(2, 'ROLE_MANAGER'),
-(3, 'ROLE_USER');
+VALUES (1, 'ROLE_ADMIN'),
+       (2, 'ROLE_MANAGER'),
+       (3, 'ROLE_USER');
 
-INSERT IGNORE INTO users (id, username, password, enabled, first_name, last_name, image, created_date, last_modified_date, last_password_change_date)
-VALUES
-(1, 'admin', '$2a$12$mTsYJAmrs9cQMpLEEOXk7ucbP8mkp5DuO5ehczmEC5/GrEgR61M8S', true, 'Admin', 'User', '/images/admin.jpg', NOW(), NOW(), NOW()),
-(2, 'manager', '$2a$12$UrjAduLzecRR/c2Ra.d1XeqUPl6iKmXP4CG3LMUaj3UCczUjKAzS2', true, 'Manager', 'User', '/images/manager.jpg', NOW(), NOW(), NOW()),
-(3, 'user', '$2a$12$cBMM4y0TcLRBErXNLunrJeHiyC9fyXc670u9vFNFx1PYz.wN2T4rK', true, 'Regular', 'User', '/images/user.jpg', NOW(), NOW(), NOW()),
-(4, 'asa7ur', '$2a$12$cBMM4y0TcLRBErXNLunrJeHiyC9fyXc670u9vFNFx1PYz.wN2T4rK', true, 'Garik', 'Asatryan', '/images/user.jpg', NOW(), NOW(), NOW());
+INSERT IGNORE INTO users (id, username, password, enabled, first_name, last_name, image, created_date,
+                          last_modified_date, last_password_change_date)
+VALUES (1, 'admin', '$2a$12$mTsYJAmrs9cQMpLEEOXk7ucbP8mkp5DuO5ehczmEC5/GrEgR61M8S', true, 'Admin', 'User',
+        '/images/admin.jpg', NOW(), NOW(), NOW()),
+       (2, 'manager', '$2a$12$UrjAduLzecRR/c2Ra.d1XeqUPl6iKmXP4CG3LMUaj3UCczUjKAzS2', true, 'Manager', 'User',
+        '/images/manager.jpg', NOW(), NOW(), NOW()),
+       (3, 'user', '$2a$12$GpkpIUojruYqAW.st0DeieSPs9/mbzouLAdHSa9O2YWd06TJzMdnu', true, 'Regular', 'User',
+        '/images/user.jpg', NOW(), NOW(), NOW()),
+       (4, 'asa7ur', '$2a$12$GpkpIUojruYqAW.st0DeieSPs9/mbzouLAdHSa9O2YWd06TJzMdnu', true, 'Garik', 'Asatryan',
+        '/images/user.jpg', NOW(), NOW(), NOW());
 
-INSERT IGNORE INTO user_roles (user_id, role_id) VALUES
-(1, 1),
-(2, 2),
-(3, 3),
-(4, 3);
+INSERT IGNORE INTO user_roles (user_id, role_id)
+VALUES (1, 1),
+       (2, 2),
+       (3, 3),
+       (4, 3);
