@@ -121,4 +121,8 @@ public class JwtUtil {
     private boolean isTokenExpired(Claims claims) {
         return claims.getExpiration().before(new Date());
     }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 }
